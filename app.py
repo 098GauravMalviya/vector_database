@@ -22,26 +22,30 @@ sample_corpus = [
 
 # Initialize Database (MiniLM outputs 384 dimensional vectors)
 db = VectorDatabase(d=384, n_clusters=3)
-corpus = []
+corpus = {}
 
 # Preload data
 print("Pre-loading sample data into the database...")
-for text in sample_corpus:
+for idx, text in enumerate(sample_corpus):
     emb = model.encode(text)
-    db.insert(emb, vector_id=len(corpus))
-    corpus.append(text)
+    db.insert(emb, vector_id=idx)
+    corpus[idx] = text
 
 # Build the IVF index
 db.build_ivf_index(max_iters=10)
 print("Database ready!")
 
+def get_doc_choices():
+    return [f"ID {v_id}: {text[:40]}..." for v_id, text in corpus.items() if text is not None]
+
 def insert_document(text):
     if text.strip() == "":
-        return "Please enter valid text."
+        return "Please enter valid text.", gr.update(choices=get_doc_choices())
     
+    # Next available ID
+    idx = max(corpus.keys()) + 1 if corpus else 0
     emb = model.encode(text)
-    idx = len(corpus)
-    corpus.append(text)
+    corpus[idx] = text
     db.insert(emb, vector_id=idx)
     
     # Periodically rebuild index if we get enough new documents
@@ -49,10 +53,27 @@ def insert_document(text):
         db.n_clusters = max(3, len(corpus) // 5)
         db.build_ivf_index()
         
-    return f"Inserted successfully! Total documents in database: {len(corpus)}"
+    return f"Inserted successfully! Document ID: {idx}. Total active documents: {len(db.vectors)}", gr.update(choices=get_doc_choices())
+
+def delete_document(selected_doc):
+    if not selected_doc:
+        return "Please select a document to delete.", gr.update(choices=get_doc_choices())
+    
+    try:
+        # Extract doc ID from choice string e.g. "ID 3: ..."
+        doc_id = int(selected_doc.split(":")[0].replace("ID ", "").strip())
+    except Exception:
+        return "Invalid document selection.", gr.update(choices=get_doc_choices())
+
+    if doc_id in db.vectors:
+        db.delete(doc_id)
+        deleted_text = corpus.pop(doc_id, "Unknown")
+        return f"Deleted Document ID {doc_id} ('{deleted_text[:30]}...'). Total active documents: {len(db.vectors)}", gr.update(choices=get_doc_choices(), value=None)
+    else:
+        return f"Document ID {doc_id} not found.", gr.update(choices=get_doc_choices())
 
 def search(query, method):
-    if not corpus:
+    if not db.vectors:
         return "Database is empty."
     if query.strip() == "":
         return "Please enter a query."
@@ -76,14 +97,15 @@ def search(query, method):
     output += "-" * 50 + "\n\n"
     
     for rank, (idx, score) in enumerate(results, 1):
-        output += f"#{rank} | Score: {score:.4f}\n{corpus[idx]}\n\n"
+        doc_text = corpus.get(idx, "[Deleted Document]")
+        output += f"#{rank} | Doc ID: {idx} | Score: {score:.4f}\n{doc_text}\n\n"
         
     return output
 
 # --- Gradio UI Layout ---
 with gr.Blocks(theme=gr.themes.Soft()) as interface:
     gr.Markdown("# 🚀 NumPy Vector Database Demo")
-    gr.Markdown("A custom vector database built from scratch using purely NumPy. It supports both **O(N) Brute Force** searching and **Approximate IVF-Flat** indexing.")
+    gr.Markdown("A custom vector database built from scratch using purely NumPy. Supports **Insert**, **Delete**, **Brute Force**, and **IVF-Flat** indexing.")
     
     with gr.Row():
         with gr.Column():
@@ -92,8 +114,14 @@ with gr.Blocks(theme=gr.themes.Soft()) as interface:
             insert_btn = gr.Button("Insert into Vector DB", variant="secondary")
             insert_status = gr.Textbox(label="Status", interactive=False)
             
+            gr.Markdown("---")
+            gr.Markdown("### 2. Delete Data")
+            delete_dropdown = gr.Dropdown(choices=get_doc_choices(), label="Select Document to Delete")
+            delete_btn = gr.Button("Delete Document", variant="stop")
+            delete_status = gr.Textbox(label="Deletion Status", interactive=False)
+            
         with gr.Column():
-            gr.Markdown("### 2. Search Data")
+            gr.Markdown("### 3. Search Data")
             query = gr.Textbox(label="Search Query", placeholder="What are you looking for?")
             search_method = gr.Radio(
                 ["Exact (Brute Force)", "Approximate (IVF-Flat)"], 
@@ -101,9 +129,10 @@ with gr.Blocks(theme=gr.themes.Soft()) as interface:
                 value="Exact (Brute Force)"
             )
             search_btn = gr.Button("Search", variant="primary")
-            search_results = gr.Textbox(label="Top Results", lines=10, interactive=False)
+            search_results = gr.Textbox(label="Top Results", lines=12, interactive=False)
 
-    insert_btn.click(fn=insert_document, inputs=new_doc, outputs=insert_status)
+    insert_btn.click(fn=insert_document, inputs=new_doc, outputs=[insert_status, delete_dropdown])
+    delete_btn.click(fn=delete_document, inputs=delete_dropdown, outputs=[delete_status, delete_dropdown])
     search_btn.click(fn=search, inputs=[query, search_method], outputs=search_results)
 
 if __name__ == "__main__":
