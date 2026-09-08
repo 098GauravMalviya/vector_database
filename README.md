@@ -1,4 +1,4 @@
-# 🚀 NumPy Vector Database from Scratch
+# NumPy Vector Database from Scratch
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![NumPy](https://img.shields.io/badge/dependency-NumPy-0170FE.svg)](https://numpy.org/)
@@ -9,7 +9,7 @@ A high-performance, lightweight **Vector Database built completely from scratch*
 
 ---
 
-## 📸 Overview & Architecture
+## Overview & Architecture
 
 Modern semantic search relies on converting unstructured text/data into dense vector embeddings. Searching millions of high-dimensional vectors with brute force ($O(N)$) is computationally expensive. **IVF-Flat** partitions the vector space into clusters using **K-Means Clustering** and creates inverted lists (posting lists) for each centroid.
 
@@ -36,21 +36,21 @@ graph TD
 
 ---
 
-## ✨ Features
+## Features
 
-- ⚡ **Pure NumPy Implementation**: Zero reliance on external indexing libraries (e.g., Faiss, Annoy). All distance calculations, K-Means, and index building are coded manually.
-- 🎯 **Dual Search Modes**:
+-  **Pure NumPy Implementation**: Zero reliance on external indexing libraries (e.g., Faiss, Annoy). All distance calculations, K-Means, and index building are coded manually.
+-  **Dual Search Modes**:
   - **Exact Brute-Force**: Ground-truth search comparing against 100% of vectors ($O(N)$).
   - **IVF-Flat Approximate Search**: Sub-linear search probing only candidate clusters ($O(N \cdot \frac{n_{probes}}{K})$).
-- 🔄 **Full CRUD Operations**:
+-  **Full CRUD Operations**:
   - **Insert / Batch Insert**: Pre-normalizes vectors and assigns newly inserted vectors to existing cluster centroids.
   - **Delete**: Safely removes vector embeddings from memory and updates the inverted index posting lists.
-- 📊 **Automated Benchmark Suite**: Runs 50,000+ vector benchmarks with 500 queries to compute **Speedup Factor** vs. **Recall@K Accuracy**.
-- 🖥️ **Interactive Gradio Web App**: Live semantic search application using SentenceTransformers (`all-MiniLM-L6-v2`, 384-dimensional embeddings).
+-  **Automated Benchmark Suite**: Runs 50,000+ vector benchmarks with 500 queries to compute **Speedup Factor** vs. **Recall@K Accuracy**.
+-  **Interactive Gradio Web App**: Live semantic search application using SentenceTransformers (`all-MiniLM-L6-v2`, 384-dimensional embeddings).
 
 ---
 
-## 📂 Project Structure
+##  Project Structure
 
 ```
 vector_db_tina/
@@ -63,7 +63,7 @@ vector_db_tina/
 
 ---
 
-## 🛠️ Installation & Setup
+##  Installation & Setup
 
 ### Prerequisites
 - Python 3.8 or higher
@@ -93,7 +93,7 @@ pip install -r requirements.txt
 
 ---
 
-## 🚀 Usage Guide
+##  Usage Guide
 
 ### 1. Run the Automated Benchmark
 Evaluate vector database speedup and recall accuracy on 50,000 synthetic high-dimensional vectors:
@@ -133,7 +133,7 @@ Open your browser at `http://127.0.0.1:7860` to access the interface.
 
 ---
 
-## 📖 Python API Reference
+##  Python API Reference
 
 ```python
 import numpy as np
@@ -161,7 +161,7 @@ db.delete(v_id)
 
 ---
 
-## ⚡ Performance & Trade-Offs
+##  Performance & Trade-Offs
 
 | Search Mode | Time Complexity | Accuracy (Recall) | Recommended Use Case |
 | :--- | :--- | :--- | :--- |
@@ -171,12 +171,12 @@ db.delete(v_id)
 
 ---
 
-## 🤝 Contributing
+##  Contributing
 
 Contributions, issues, and feature requests are welcome! Feel free to check out the [issues page](https://github.com/098GauravMalviya/vector_database/issues).
 
 ---
 
-## 📄 License
+##  License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
