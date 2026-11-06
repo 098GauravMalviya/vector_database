@@ -2,6 +2,7 @@ import gradio as gr
 from vector_db import VectorDatabase
 from sentence_transformers import SentenceTransformer
 import time
+import os
 
 print("Loading embedding model (this may take a few seconds on startup)...")
 model = SentenceTransformer('all-MiniLM-L6-v2')
@@ -136,4 +137,5 @@ with gr.Blocks(theme=gr.themes.Soft()) as interface:
     search_btn.click(fn=search, inputs=[query, search_method], outputs=search_results)
 
 if __name__ == "__main__":
-    interface.launch(server_port=7860, share=False)
+    port = int(os.environ.get("PORT", 7860))
+    interface.launch(server_name="0.0.0.0", server_port=port, share=False)
